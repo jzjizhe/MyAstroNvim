@@ -1,3 +1,5 @@
+# This is my Neovim configuration forked from [AstroNvim](https://github.com/AstroNvim/AstroNvim).
+
 # AstroNvim Template
 
 **NOTE:** This is for AstroNvim v5+
