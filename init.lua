@@ -32,3 +32,19 @@ vim.keymap.set('n', '<leader>j', 'i<CR><Esc>', { noremap = true, silent = true, 
 -- Insert empty line
 vim.keymap.set('n', '<leader>o', 'o<Esc>', {noremap = true, silent = true, desc = 'Insert empty line below'  })
 vim.keymap.set('n', '<leader>O', 'O<Esc>', {noremap = true, silent = true, desc = 'Insert empty line above' })
+
+if vim.env.TMUX then
+    vim.g.clipboard = {
+        name = 'tmux-clipboard',
+        copy = {
+            ['+'] = {'tmux', 'load-buffer', '-w', '-'},
+        },
+        paste = {
+            ['+'] = {'tmux', 'save-buffer', '-'},
+        },
+        cache_enabled = true,
+    }
+end
+
+-- Set the background to light
+vim.o.background = "light"
