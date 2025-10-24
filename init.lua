@@ -48,3 +48,7 @@ end
 
 -- Set the background to light
 vim.o.background = "light"
+vim.keymap.set("n", "<leader>q", "<C-v>")
+
+
+
