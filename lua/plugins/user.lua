@@ -18,6 +18,17 @@ return {
             global = true,  -- 全局切换目录
           },
         },
+        git = {
+          ignore = false, -- 关闭 neo-tree 遵循 .gitignore 规则（关键项）
+        },
+        filesystem = {
+        -- 核心：关闭「隐藏 gitignored 文件」的兜底规则
+          filtered_items = {
+            hide_gitignored = false,  -- 必须加！Astronvim 默认是 true
+            hide_dotfiles = true,    -- 可选：显示 . 开头的隐藏文件夹
+            hide_hidden = true,      -- 可选：显示系统隐藏文件（mac/Linux）
+          },
+        },
       })
     end,
   },
