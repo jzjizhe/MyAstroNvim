@@ -111,6 +111,51 @@ return {
       },
     },
   },
+  {
+    "AstroNvim/astrocore",
+    opts = {
+      autocmds = {
+        open_dashboard_on_startup = {
+          {
+            event = { "VimEnter", "BufEnter" },
+            desc = "Show dashboard in empty window beside neo-tree during startup",
+            nested = true,
+            callback = function()
+              if vim.g.opened_dashboard_on_startup then return end
+
+              local has_neotree = false
+              local empty_win, empty_buf
+
+              for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+                if vim.api.nvim_win_get_config(win).relative == "" then
+                  local buf = vim.api.nvim_win_get_buf(win)
+                  local filetype = vim.bo[buf].filetype
+
+                  if filetype == "snacks_dashboard" then
+                    vim.g.opened_dashboard_on_startup = true
+                    return
+                  elseif filetype == "neo-tree" then
+                    has_neotree = true
+                  elseif vim.bo[buf].buftype == ""
+                    and vim.api.nvim_buf_get_name(buf) == ""
+                    and not vim.bo[buf].modified
+                    and vim.api.nvim_buf_line_count(buf) == 1
+                    and (vim.api.nvim_buf_get_lines(buf, 0, 1, false)[1] or "") == "" then
+                    empty_win, empty_buf = win, buf
+                  end
+                end
+              end
+
+              if not has_neotree or not empty_win then return end
+
+              vim.g.opened_dashboard_on_startup = true
+              require("snacks.dashboard").open({ buf = empty_buf, win = empty_win })
+            end,
+          },
+        },
+      },
+    },
+  },
 
   -- You can disable default plugins as follows:
   { "max397574/better-escape.nvim", enabled = false },
