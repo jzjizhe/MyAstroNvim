@@ -50,5 +50,16 @@ end
 vim.o.background = "light"
 vim.keymap.set("n", "<leader>q", "<C-v>")
 
+-- Markdown 文件自动换行
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = { "markdown" },
+  callback = function()
+    vim.opt_local.wrap = true
+    vim.opt_local.linebreak = true
+    vim.opt_local.breakindent = true
+  end,
+  desc = "Enable word wrap for markdown files",
+})
+
 
 
