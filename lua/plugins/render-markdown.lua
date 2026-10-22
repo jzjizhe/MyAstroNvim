@@ -25,18 +25,6 @@ return {
       },
     },
   },
-  -- Ensure markdown treesitter parsers are installed
-  {
-    "nvim-treesitter/nvim-treesitter",
-    opts = function(_, opts)
-      if opts.ensure_installed ~= "all" then
-        opts.ensure_installed = require("astrocore").list_insert_unique(
-          opts.ensure_installed or {},
-          { "markdown", "markdown_inline" }
-        )
-      end
-    end,
-  },
   -- Set conceallevel for markdown files
   {
     "AstroNvim/astrocore",

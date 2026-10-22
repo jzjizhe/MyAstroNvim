@@ -201,21 +201,4 @@ return {
     end,
   },
 
-  -- Highlight word under cursor (like VS Code)
-  {
-    "RRethy/vim-illuminate",
-    event = "BufRead",
-    config = function()
-      require("illuminate").configure({
-        delay = 200,
-        under_cursor = true,
-        filetypes_denylist = {
-          "dirvish",
-          "fugitive",
-          "neo-tree",
-          "dashboard",
-        },
-      })
-    end,
-  },
 }
