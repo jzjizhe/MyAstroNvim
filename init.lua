@@ -44,6 +44,23 @@ if vim.env.TMUX then
         },
         cache_enabled = true,
     }
+elseif vim.env.HERDR_ENV == "1" then
+    -- Herdr forwards OSC 52 from panes to the attached terminal's clipboard.
+    -- Copy via OSC 52; paste from the last yank so `p` never waits on the terminal.
+    local osc52 = require("vim.ui.clipboard.osc52")
+    local last = { { "" }, "v" }
+    local function copy(reg)
+        local write = osc52.copy(reg)
+        return function(lines, regtype)
+            last = { lines, regtype }
+            write(lines)
+        end
+    end
+    vim.g.clipboard = {
+        name = "herdr-osc52",
+        copy = { ["+"] = copy("+"), ["*"] = copy("*") },
+        paste = { ["+"] = function() return last end, ["*"] = function() return last end },
+    }
 end
 
 -- Set the background to light
