@@ -44,8 +44,8 @@ if vim.env.TMUX then
         },
         cache_enabled = true,
     }
-elseif vim.env.HERDR_ENV == "1" then
-    -- Herdr forwards OSC 52 from panes to the attached terminal's clipboard.
+elseif vim.env.HERDR_ENV == "1" or vim.env.REX_SESSION or vim.env.TERM_PROGRAM == "rex" then
+    -- Herdr and Rex forward OSC 52 writes from panes to the attached client's clipboard.
     -- Copy via OSC 52; paste from the last yank so `p` never waits on the terminal.
     local osc52 = require("vim.ui.clipboard.osc52")
     local last = { { "" }, "v" }
@@ -57,25 +57,73 @@ elseif vim.env.HERDR_ENV == "1" then
         end
     end
     vim.g.clipboard = {
-        name = "herdr-osc52",
+        name = "osc52-write",
         copy = { ["+"] = copy("+"), ["*"] = copy("*") },
         paste = { ["+"] = function() return last end, ["*"] = function() return last end },
     }
+    if vim.g.loaded_clipboard_provider == 0 then
+        vim.g.loaded_clipboard_provider = nil
+        vim.cmd("runtime autoload/provider/clipboard.vim")
+    end
 end
 
--- Set the background to light
-vim.o.background = "light"
+-- Auto-copy Visual mouse selection on left-click release without leaving Visual mode
+if vim.g.clipboard then
+    local left_release = vim.keycode("<LeftRelease>")
+    local ns = vim.api.nvim_create_namespace("osc52_mouse_copy")
+    local pending = false
+    vim.on_key(function(key, typed)
+        local k = (typed and typed ~= "") and typed or key
+        if k and not pending and k:find(left_release, 1, true) then
+            pending = true
+            vim.schedule(function()
+                pending = false
+                local m = vim.fn.mode()
+                if m:find("^[vV\22]") then
+                    local lines = vim.fn.getregion(vim.fn.getpos("v"), vim.fn.getpos("."), { type = m })
+                    vim.fn.setreg("+", lines, m)
+                end
+            end)
+        end
+    end, ns)
+end
+
 vim.keymap.set("n", "<leader>q", "<C-v>")
 
--- Markdown 文件自动换行
-vim.api.nvim_create_autocmd("FileType", {
-  pattern = { "markdown" },
+-- Auto-persist /tmp plugin/parser/mason updates back to DolphinFS after :Lazy operations
+local lazy_dirty = false
+local lazy_save_timer = nil
+local function spawn_nvim_save()
+  if not lazy_dirty then return end
+  lazy_dirty = false
+  if lazy_save_timer then
+    lazy_save_timer:stop()
+    lazy_save_timer:close()
+    lazy_save_timer = nil
+  end
+  if vim.env.NVIM_APPNAME == "nvim-fast" and vim.fn.executable("nvim-save") == 1 then
+    vim.system({ "nvim-save" }, { detach = true, stdout = false, stderr = false })
+  end
+end
+
+vim.api.nvim_create_autocmd("User", {
+  pattern = { "LazyInstall", "LazyUpdate", "LazyClean", "LazySync" },
   callback = function()
-    vim.opt_local.wrap = true
-    vim.opt_local.linebreak = true
-    vim.opt_local.breakindent = true
+    if vim.env.NVIM_APPNAME ~= "nvim-fast" then return end
+    lazy_dirty = true
+    if lazy_save_timer then
+      lazy_save_timer:stop()
+      lazy_save_timer:close()
+    end
+    lazy_save_timer = vim.uv.new_timer()
+    lazy_save_timer:start(3000, 0, vim.schedule_wrap(spawn_nvim_save))
   end,
-  desc = "Enable word wrap for markdown files",
+  desc = "Persist /tmp Neovim plugins back to DolphinFS after Lazy changes",
+})
+
+vim.api.nvim_create_autocmd("VimLeavePre", {
+  callback = spawn_nvim_save,
+  desc = "Flush pending /tmp Neovim plugin persistence on exit",
 })
 
 
