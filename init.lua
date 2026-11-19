@@ -24,7 +24,6 @@ if not pcall(require, "lazy") then
 end
 
 require "lazy_setup"
-require "polish"
 
 -- Split current line
 vim.keymap.set('n', '<leader>j', 'i<CR><Esc>', { noremap = true, silent = true, desc="Split current line" })
@@ -88,7 +87,7 @@ if vim.g.clipboard then
     end, ns)
 end
 
-vim.keymap.set("n", "<leader>q", "<C-v>")
+vim.keymap.set("n", "<leader>q", "<C-v>", { noremap = true, silent = true, desc = "Visual Block Mode" })
 
 -- Auto-persist /tmp plugin/parser/mason updates back to DolphinFS after :Lazy operations
 local lazy_dirty = false

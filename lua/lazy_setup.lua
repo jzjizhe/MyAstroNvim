@@ -11,13 +11,12 @@ require("lazy").setup({
       update_notifications = true, -- Enable/disable notification about running `:Lazy update` twice to update pinned plugins
     },
   },
-  { import = "community" },
   { import = "plugins" },
 } --[[@as LazySpec]], {
   -- Configure any other `lazy.nvim` configuration options here
   -- git 2.11 does not support --filter=blob:none (requires >=2.19)
   git = { filter = false },
-  install = { colorscheme = { "astrotheme", "habamax" } },
+  install = { colorscheme = { "winter-is-coming-light", "habamax" } },
   ui = { backdrop = 100 },
   performance = {
     rtp = {
@@ -25,8 +24,10 @@ require("lazy").setup({
       disabled_plugins = {
         "gzip",
         "netrwPlugin",
+        "rplugin",
         "tarPlugin",
         "tohtml",
+        "tutor",
         "zipPlugin",
       },
     },

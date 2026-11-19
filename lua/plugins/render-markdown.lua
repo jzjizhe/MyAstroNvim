@@ -185,6 +185,10 @@ local function sync_markdown_layout()
 
     if not md_layout.enabled or #md_wins ~= 1 or other_real_wins > 0 then
       close_pads(tab)
+      if not md_layout.enabled and ts.auto_aerial == true and aerial_win then
+        close_aerial_programmatic()
+        ts.auto_aerial = false
+      end
       return
     end
 
@@ -546,6 +550,7 @@ return {
     opts = function(_, opts)
       local astrocore = require("astrocore")
       local spacing_ns = vim.api.nvim_create_namespace("markdown_airy_spacing")
+      local spacing_grp = vim.api.nvim_create_augroup("MdAirySpacing", { clear = true })
 
       local function refresh_markdown_spacing(buf)
         if not vim.api.nvim_buf_is_valid(buf) or vim.bo[buf].filetype ~= "markdown" then
@@ -616,8 +621,6 @@ return {
               local ts = get_tab_state(t)
               if t == cur_tab and ts.auto_aerial == true then
                 close_aerial_programmatic()
-                ts.auto_aerial = false
-              elseif ts.auto_aerial == true then
                 ts.auto_aerial = false
               end
             end
@@ -757,9 +760,20 @@ return {
             end
             refresh_markdown_spacing(args.buf)
 
-            vim.api.nvim_create_autocmd({ "BufEnter", "TextChanged", "InsertLeave" }, {
+            vim.api.nvim_clear_autocmds({ group = spacing_grp, buffer = args.buf })
+            vim.api.nvim_create_autocmd("BufEnter", {
+              group = spacing_grp,
               buffer = args.buf,
               callback = function() refresh_markdown_spacing(args.buf) end,
+            })
+            vim.api.nvim_create_autocmd({ "TextChanged", "InsertLeave" }, {
+              group = spacing_grp,
+              buffer = args.buf,
+              callback = function()
+                if vim.b[args.buf].md_airy_spacing then
+                  refresh_markdown_spacing(args.buf)
+                end
+              end,
             })
 
             vim.keymap.set("n", "j", "v:count == 0 ? 'gj' : 'j'", { buffer = args.buf, expr = true, silent = true })

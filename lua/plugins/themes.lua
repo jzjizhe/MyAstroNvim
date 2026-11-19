@@ -46,6 +46,8 @@ local function save_theme(scheme, bg)
   f:close()
 end
 
+local strip_scheduled = false
+
 local function strip_italics()
   for name, hl in pairs(vim.api.nvim_get_hl(0, {})) do
     if hl.italic or (hl.cterm and hl.cterm.italic) then
@@ -63,6 +65,26 @@ local function strip_italics()
   end
 end
 
+local function schedule_strip_italics()
+  if strip_scheduled then return end
+  strip_scheduled = true
+  vim.schedule(function()
+    strip_scheduled = false
+    strip_italics()
+  end)
+end
+
+local function is_saved_active(s)
+  if not s or vim.o.background ~= s.bg then return false end
+  local cur = vim.g.colors_name
+  if not cur then return false end
+  if cur == s.scheme then return true end
+  if (s.scheme == "flexoki-light" or s.scheme == "flexoki-dark") and cur == "flexoki" then
+    return true
+  end
+  return false
+end
+
 local function apply_theme_entry(entry)
   if not entry then return end
   vim.o.background = entry.bg or "light"
@@ -72,6 +94,7 @@ local function apply_theme_entry(entry)
     pcall(vim.cmd.colorscheme, "winter-is-coming-light")
   end
   strip_italics()
+  schedule_strip_italics()
 end
 
 local saved = read_saved_theme()
@@ -111,11 +134,16 @@ return {
     lazy = true,
   },
 
-  -- Set default colorscheme via AstroUI
+  -- Set default colorscheme and disable italic tabline via AstroUI
   {
     "AstroNvim/astroui",
     opts = {
       colorscheme = saved and saved.scheme or "winter-is-coming-light",
+      status = {
+        attributes = {
+          buffer_active = { bold = true, italic = false },
+        },
+      },
     },
   },
 
@@ -193,38 +221,41 @@ return {
       }
 
       opts.autocmds = opts.autocmds or {}
-      opts.autocmds.restore_reading_theme = {
-        {
-          event = "VimEnter",
-          desc = "Ensure persisted reading theme & italic-free state after startup",
-          callback = function()
-            local s = read_saved_theme()
-            if s and (vim.o.background ~= s.bg or vim.g.colors_name == nil) then
-              apply_theme_entry(s)
-            else
-              strip_italics()
-            end
-          end,
-        },
-        {
-          event = { "ColorScheme", "Syntax" },
-          desc = "Disable italic styles across all colorschemes and syntax files",
-          callback = function()
-            if package.loaded["flash"] then
-              pcall(function() require("flash.highlight").setup() end)
-            end
-            strip_italics()
-          end,
-        },
-        {
-          event = "User",
-          pattern = "LazyLoad",
-          desc = "Strip italics from lazy-loaded plugin highlight groups",
-          callback = function()
-            strip_italics()
-          end,
-        },
-      }
+      if not vim.g.vscode then
+        opts.autocmds.restore_reading_theme = {
+          {
+            event = "VimEnter",
+            nested = true,
+            desc = "Ensure persisted reading theme & italic-free state after startup",
+            callback = function()
+              local s = read_saved_theme()
+              if s and not is_saved_active(s) then
+                apply_theme_entry(s)
+              else
+                schedule_strip_italics()
+              end
+            end,
+          },
+          {
+            event = { "ColorScheme", "Syntax" },
+            desc = "Disable italic styles across all colorschemes and syntax files",
+            callback = function()
+              if package.loaded["flash"] then
+                pcall(function() require("flash.highlight").setup() end)
+              end
+              schedule_strip_italics()
+            end,
+          },
+          {
+            event = "User",
+            pattern = "LazyLoad",
+            desc = "Strip italics from lazy-loaded plugin highlight groups",
+            callback = function()
+              schedule_strip_italics()
+            end,
+          },
+        }
+      end
     end,
   },
 }

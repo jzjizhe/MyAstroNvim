@@ -39,6 +39,11 @@ local palettes = {
     diag_warn = "#C58600",
     diag_info = "#236EBF",
     diag_hint = "#08916A",
+    diag_err_bg = "#FDF0F0",
+    diag_warn_bg = "#FCF7E6",
+    diag_info_bg = "#EEF5FC",
+    diag_hint_bg = "#EBF7F3",
+    inlay_hint = "#5A6B7C",
     diff_add_bg = "#E6F4EA",
     diff_change_bg = "#E8F1FB",
     diff_del_bg = "#FCE8E6",
@@ -95,6 +100,11 @@ local palettes = {
     diag_warn = "#FFCB6B",
     diag_info = "#6DBDFA",
     diag_hint = "#7FDBCA",
+    diag_err_bg = "#251829",
+    diag_warn_bg = "#232528",
+    diag_info_bg = "#0C2742",
+    diag_hint_bg = "#0B2933",
+    inlay_hint = "#7E97AC",
     diff_add_bg = "#0E2E2B",
     diff_change_bg = "#0C2B4B",
     diff_del_bg = "#351B29",
@@ -151,6 +161,11 @@ local palettes = {
     diag_warn = "#FFCB6B",
     diag_info = "#6DBDFA",
     diag_hint = "#7FDBCA",
+    diag_err_bg = "#392725",
+    diag_warn_bg = "#363324",
+    diag_info_bg = "#26323B",
+    diag_hint_bg = "#253430",
+    inlay_hint = "#99A3AD",
     diff_add_bg = "#273828",
     diff_change_bg = "#253342",
     diff_del_bg = "#3D2626",
@@ -242,15 +257,23 @@ function M.load(variant)
   set("GitSignsChange", { fg = p.diag_info })
   set("GitSignsDelete", { fg = p.diag_err })
 
-  -- Diagnostics
+  -- Diagnostics & LSP Inlay Hints
   set("DiagnosticError", { fg = p.diag_err })
   set("DiagnosticWarn", { fg = p.diag_warn })
   set("DiagnosticInfo", { fg = p.diag_info })
   set("DiagnosticHint", { fg = p.diag_hint })
+  set("DiagnosticVirtualTextError", { fg = p.diag_err, bg = p.diag_err_bg })
+  set("DiagnosticVirtualTextWarn", { fg = p.diag_warn, bg = p.diag_warn_bg })
+  set("DiagnosticVirtualTextInfo", { fg = p.diag_info, bg = p.diag_info_bg })
+  set("DiagnosticVirtualTextHint", { fg = p.diag_hint, bg = p.diag_hint_bg })
   set("DiagnosticUnderlineError", { sp = p.diag_err, undercurl = true })
   set("DiagnosticUnderlineWarn", { sp = p.diag_warn, undercurl = true })
   set("DiagnosticUnderlineInfo", { sp = p.diag_info, undercurl = true })
   set("DiagnosticUnderlineHint", { sp = p.diag_hint, undercurl = true })
+  set("LspInlayHint", { fg = p.inlay_hint })
+  set("LspReferenceText", { bg = p.bg_visual })
+  set("LspReferenceRead", { bg = p.bg_visual })
+  set("LspReferenceWrite", { bg = p.bg_visual, bold = true })
 
   -- Standard Syntax & Treesitter (strictly NO italics)
   set("Comment", { fg = p.comment })
@@ -292,17 +315,28 @@ function M.load(variant)
   set("@constant.builtin", { fg = p.builtin })
   set("@module", { fg = p.class })
   set("@string", { fg = p.string })
+  set("@string.documentation", { fg = p.comment })
   set("@string.escape", { fg = p.operator })
   set("@number", { fg = p.number })
   set("@boolean", { fg = p.number })
   set("@function", { fg = p.func })
   set("@function.builtin", { fg = p.builtin })
+  set("@function.call", { fg = p.func })
   set("@function.method", { fg = p.func })
+  set("@function.method.call", { fg = p.func })
   set("@constructor", { fg = p.class })
   set("@keyword", { fg = p.keyword })
+  set("@keyword.function", { fg = p.keyword })
+  set("@keyword.import", { fg = p.keyword })
+  set("@keyword.conditional", { fg = p.keyword })
+  set("@keyword.repeat", { fg = p.keyword })
+  set("@keyword.exception", { fg = p.keyword })
+  set("@keyword.storage", { fg = p.storage })
   set("@keyword.operator", { fg = p.operator })
   set("@keyword.return", { fg = p.keyword })
   set("@operator", { fg = p.operator })
+  set("@attribute", { fg = p.storage })
+  set("@attribute.builtin", { fg = p.storage })
   set("@type", { fg = p.type })
   set("@type.builtin", { fg = p.type })
   set("@tag", { fg = p.tag })
@@ -312,6 +346,21 @@ function M.load(variant)
   set("@punctuation.bracket", { fg = p.fg_code })
   set("@punctuation.delimiter", { fg = p.fg_code })
   set("@comment", { fg = p.comment })
+  set("@comment.documentation", { fg = p.comment })
+
+  -- LSP Semantic Tokens (VS Code Winter is Coming parity)
+  set("@lsp.type.namespace", { fg = p.class })
+  set("@lsp.type.class", { fg = p.class })
+  set("@lsp.type.struct", { fg = p.class })
+  set("@lsp.type.interface", { fg = p.type })
+  set("@lsp.type.type", { fg = p.type })
+  set("@lsp.type.parameter", { fg = p.parameter })
+  set("@lsp.type.property", { fg = p.property })
+  set("@lsp.type.variable", { fg = p.variable })
+  set("@lsp.type.function", { fg = p.func })
+  set("@lsp.type.method", { fg = p.func })
+  set("@lsp.type.decorator", { fg = p.storage })
+  set("@lsp.type.enumMember", { fg = p.constant })
 
   -- Authentic Winter is Coming Markdown & render-markdown.nvim groups
   local h_cols = { p.md_h1, p.md_h2, p.md_h3, p.md_h4, p.md_h4, p.md_h4 }
@@ -347,16 +396,77 @@ function M.load(variant)
   set("RenderMarkdownTableHead", { fg = p.md_h1, bold = true })
   set("RenderMarkdownTableRow", { fg = p.md_list })
 
-  -- Neo-tree / Aerial / Snacks / Flash polish
+  -- Neo-tree / Aerial / Snacks / Blink / WhichKey / Flash polish
   set("NeoTreeNormal", { fg = p.fg, bg = p.bg_alt })
   set("NeoTreeNormalNC", { fg = p.fg, bg = p.bg_alt })
   set("NeoTreeEndOfBuffer", { fg = p.bg_alt, bg = p.bg_alt })
   set("NeoTreeWinSeparator", { fg = p.border, bg = p.bg })
+  set("NeoTreeTitleBar", { fg = p.md_h1, bg = p.status_bg, bold = true })
+  set("NeoTreeRootName", { fg = p.md_h1, bold = true })
+  set("NeoTreeDirectoryName", { fg = p.md_h2 })
+  set("NeoTreeDirectoryIcon", { fg = p.fg_linenr_cur })
+  set("NeoTreeIndentMarker", { fg = p.border })
+  set("NeoTreeFileNameOpened", { fg = p.md_h1, bold = true })
+  set("NeoTreeGitModified", { fg = p.diag_info })
+  set("NeoTreeGitUntracked", { fg = p.storage })
+  set("NeoTreeGitAdded", { fg = p.diag_hint })
+  set("NeoTreeGitDeleted", { fg = p.diag_err })
+  set("NeoTreeGitIgnored", { fg = p.fg_muted })
   set("NeoTreeTabActive", { fg = p.md_h1, bg = p.bg, bold = true })
   set("NeoTreeTabInactive", { fg = p.fg_muted, bg = p.bg_alt })
   set("NeoTreeTabSeparatorActive", { fg = p.border, bg = p.bg })
   set("NeoTreeTabSeparatorInactive", { fg = p.border, bg = p.bg_alt })
+
+  set("AerialNormal", { fg = p.fg, bg = p.bg })
+  set("AerialGuide", { fg = p.border })
   set("AerialLine", { bg = p.bg_visual, bold = true })
+
+  set("SnacksPickerNormal", { fg = p.fg, bg = p.bg_float })
+  set("SnacksPickerBorder", { fg = p.border, bg = p.bg_float })
+  set("SnacksPickerTitle", { fg = p.md_h1, bg = p.bg_float, bold = true })
+  set("SnacksPickerPrompt", { fg = p.fg_linenr_cur, bg = p.bg_float, bold = true })
+  set("SnacksPickerMatch", { fg = p.func, bold = true })
+  set("SnacksPickerListCursorLine", { bg = p.bg_visual })
+  set("SnacksPickerDir", { fg = p.fg_muted })
+  set("SnacksPickerFile", { fg = p.fg })
+  set("SnacksDashboardHeader", { fg = p.md_h1, bold = true })
+  set("SnacksDashboardIcon", { fg = p.md_h2 })
+  set("SnacksDashboardKey", { fg = p.func, bold = true })
+  set("SnacksDashboardDesc", { fg = p.fg })
+  set("SnacksDashboardFooter", { fg = p.fg_muted })
+
+  set("BlinkCmpMenu", { fg = p.fg, bg = p.bg_float })
+  set("BlinkCmpMenuBorder", { fg = p.border, bg = p.bg_float })
+  set("BlinkCmpMenuSelection", { fg = p.fg, bg = p.bg_visual, bold = true })
+  set("BlinkCmpLabel", { fg = p.fg })
+  set("BlinkCmpLabelMatch", { fg = p.func, bold = true })
+  set("BlinkCmpLabelDeprecated", { fg = p.fg_muted, strikethrough = true })
+  set("BlinkCmpDoc", { fg = p.fg, bg = p.bg_float })
+  set("BlinkCmpDocBorder", { fg = p.border, bg = p.bg_float })
+  set("BlinkCmpSignatureHelp", { fg = p.fg, bg = p.bg_float })
+  set("BlinkCmpSignatureHelpBorder", { fg = p.border, bg = p.bg_float })
+  set("BlinkCmpKind", { fg = p.md_h2 })
+  set("BlinkCmpKindFunction", { fg = p.func })
+  set("BlinkCmpKindMethod", { fg = p.func })
+  set("BlinkCmpKindVariable", { fg = p.variable })
+  set("BlinkCmpKindField", { fg = p.property })
+  set("BlinkCmpKindProperty", { fg = p.property })
+  set("BlinkCmpKindClass", { fg = p.class })
+  set("BlinkCmpKindInterface", { fg = p.type })
+  set("BlinkCmpKindModule", { fg = p.class })
+  set("BlinkCmpKindKeyword", { fg = p.keyword })
+  set("BlinkCmpKindSnippet", { fg = p.storage })
+  set("BlinkCmpKindText", { fg = p.fg_muted })
+  set("BlinkCmpKindConstant", { fg = p.constant })
+
+  set("WhichKeyNormal", { fg = p.fg, bg = p.bg_float })
+  set("WhichKeyBorder", { fg = p.border, bg = p.bg_float })
+  set("WhichKeyTitle", { fg = p.md_h1, bg = p.bg_float, bold = true })
+  set("WhichKeyGroup", { fg = p.md_h2, bold = true })
+  set("WhichKeyDesc", { fg = p.fg })
+  set("WhichKeySeparator", { fg = p.fg_muted })
+  set("WhichKeyValue", { fg = p.fg_muted })
+
   set("FlashBackdrop", { fg = p.fg_muted })
   set("FlashMatch", { fg = p.fg, bg = p.bg_visual })
   set("FlashCurrent", { fg = p.bg, bg = p.fg_linenr_cur, bold = true })
