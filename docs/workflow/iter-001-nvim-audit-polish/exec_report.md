@@ -51,3 +51,21 @@
 5. **TEST 5 (`nvim README.md` + Neo-tree + `:enew`)**: `open_dashboard_on_startup` autocmd count = `0`; `:enew` stays editable (not hijacked by dashboard).
 6. **TEST 6 (`nvim .` directory startup)**: Both `neo-tree` and `snacks_dashboard` present; `open_dashboard_on_startup` autocmd count = `0` (caught and fixed multi-event `return true` only clearing 1 of 2 events!).
 7. **TEST 7 (`nvim +vnew`)**: `open_dashboard_on_startup` autocmd count = `0`.
+
+---
+
+## 3. Round 1 Code+Test Review Fixes (`fix(iter-001)`)
+
+1. **`[ACCEPTED]` Manual `<Leader>mo` outline when `<Leader>mw` is off (`lua/plugins/render-markdown.lua:672`)** *(DeepSeek, Codex)*:
+   - Changed `<Leader>mo` open branch to set `ts.auto_aerial = md_layout.enabled and true or "manual_open"`, so manually opening Aerial while centered layout is disabled is never closed by `sync_markdown_layout()`.
+2. **`[ACCEPTED]` No-arg headless startup expiration (`lua/plugins/user.lua:227,271`)** *(Codex)*:
+   - Added `(ev and ev.event == "VimEnter" and not has_neotree)` to the `argc == 0` expiration guard in `open_dashboard_on_startup`, ensuring no-arg sessions where Snacks skips its dashboard never leave the listener armed past `VimEnter`.
+3. **`[REJECTED]` `module = false` Blink swatch session cache (`lua/plugins/user.lua:47`)** *(Codex)*:
+   - Explicitly adjudicated and accepted by the user as a minor cosmetic trade-off during Plan Review Round 3 (Option A); inline color highlighting in allowlisted buffers (`.css`/`.lua`/`.json`) remains fully functional.
+4. **Expanded Automated Verification (6/6 Passed)**:
+   - **TEST A**: `<Leader>mw` off → `<Leader>mo` → `aerial.is_open()` remains `true` after `sync_markdown_layout()`.
+   - **TEST B**: Real 2.0 MB `.css` file → `astrocore.buffer.is_large(buf) == true`, `exclude_buffer(buf) == true`; `astrocore.plugin_opts("blink.cmp")` resolves `Normal:BlinkCmpMenu` / `Normal:BlinkCmpDoc` / `Normal:BlinkCmpSignatureHelp`.
+   - **TEST C**: No-arg headless `nvim` + `:Neotree show` + `wincmd l` → autocmd count = `0`, empty buffer not hijacked.
+   - **TEST D**: `nvim +vnew` → autocmd count = `0`, both splits remain editable (`modifiable`, not `snacks_dashboard`).
+   - **TEST E**: Persisted `flexoki-light` + forced `habamax` before `VimEnter` → restored `colors_name="flexoki"`, `bg="light"`, `ColorScheme` hooks fired (`cs_fired=3`), zero italic groups after `redrawtabline`.
+   - **TEST F**: `nvim .` directory startup regression → both `neo-tree` and `snacks_dashboard` present, autocmd count = `0`.

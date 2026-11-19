@@ -669,7 +669,7 @@ return {
               vim.api.nvim_set_current_win(md_wins[1])
             end
             aerial.open({ focus = false, direction = "right" })
-            ts.auto_aerial = true
+            ts.auto_aerial = md_layout.enabled and true or "manual_open"
           end
           vim.schedule(sync_markdown_layout)
         end,

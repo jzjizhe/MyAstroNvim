@@ -224,7 +224,7 @@ return {
           event = { "VimEnter", "BufEnter" },
           desc = "Show dashboard in empty window beside neo-tree during startup",
           nested = true,
-          callback = function()
+          callback = function(ev)
             local function finish()
               vim.g.opened_dashboard_on_startup = true
               pcall(vim.api.nvim_clear_autocmds, { group = "open_dashboard_on_startup" })
@@ -268,7 +268,7 @@ return {
               end
             end
 
-            if argc == 0 and normal_wins > 1 then
+            if argc == 0 and (normal_wins > 1 or (ev and ev.event == "VimEnter" and not has_neotree)) then
               return finish()
             end
 
